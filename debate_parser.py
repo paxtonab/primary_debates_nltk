@@ -124,7 +124,118 @@ def speaker_stats(speaker_list, parsed_text):
     return speaker_stat_list
 
 
+def candidate_totals(candidate_totals_list):
+    candidate_stat_list = []
+
+    for i in candidate_totals_list:
+        candidate_stat_list.append({
+            'candidate':i['candidate'],
+            'total_debates':i['total_debates'],
+            'total_times_spoken':i['total_times_spoken'],
+            'count_total_unique_words':0,
+            'count_total_words_spoken':0,
+            'total_fd':[],
+            'avg_times_spoken_per_debate':0
+        })
+
+    # nltk processing of text
+    for item in candidate_totals_list:
+        for candidate in candidate_stat_list:
+            if item['candidate'] == candidate['candidate']:
+                # create tokens
+                tokens = nltk.word_tokenize(item['text'])
+                # create NLTK text
+                nltk_text = nltk.Text(tokens)
+                # scrub punctuations & stop words
+                sw = stopwords.words('english')
+                nltk_text_scrubbed = [w.lower() for w in nltk_text if w.isalpha() and w.lower() not in sw]
+                # get count of words
+                candidate['count_total_words_spoken'] += len(nltk_text_scrubbed)
+                # create frequency distribution
+                fd = nltk.FreqDist(nltk_text_scrubbed)
+                # get count of unique words
+                candidate['count_total_unique_words'] = len(fd)
+                # create fd for viz
+                fd_items = fd.items()
+                fd_list = []
+                for fd_item in fd_items:
+                    fd_list.append(fd_item)
+
+                candidate['total_fd'] = fd_list
+
+    for i in candidate_stat_list:
+        i['avg_times_spoken_per_debate'] = i['total_times_spoken']/i['total_debates']
+
+    return candidate_stat_list
+
+
+def debate_main_file(speaker_stat_list, candidate_list):
+    with open('debate_main.csv','a') as main:
+        # add column headers
+        main.write('Speaker,Times Spoken,Unique Words,Total Words,Average Words,Debate\n')
+        for i in speaker_stat_list:
+            if i['speaker'] in candidate_list:
+                main.write(
+                    i['speaker']+','
+                    +str(i['count'])+','
+                    +str(i['count_unique_words'])+','
+                    +str(i['count_words_spoken'])+','
+                    +str(i['avg_words_spoken'])+','
+                    +file
+                    +'\n'
+                ) # add other stats here... like all text: +','+i['text'])
+
+
+def debate_fd_file(speaker_stat_list, candidate_list, file):
+    with open('debate_fd.csv','a') as fd:
+        # add column headers
+        fd.write('Speaker,Word,Frequency,Debate\n')
+        for i in speaker_stat_list:
+            if i['speaker'] in candidate_list:
+                for dist in i['fd']:
+                    (key, value) = dist
+                    fd.write(
+                        i['speaker']+','
+                        +str(key)+','
+                        +str(value)+','
+                        +file
+                        +'\n'
+                    ) # add other stats here... like all text: +','+i['text'])
+
+
+def debate_total_fd_file(candidate_stat_list, file):
+    with open('debate_total_fd.csv','a') as fd:
+        # add column headers
+        fd.write('Speaker,Word,Frequency\n')
+        for i in candidate_stat_list:
+            for dist in i['total_fd']:
+                (key, value) = dist
+                fd.write(
+                    i['candidate']+','
+                    +str(key)+','
+                    +str(value)
+                    +'\n'
+                ) # add other stats here... like all text: +','+i['text'])
+
+
+def debate_total_file(candidate_stat_list):
+    with open('debate_total.csv','a') as total:
+        # add column headers
+        total.write('Speaker,Unique Words,Total Words,Total Debates Present,Times Spoken,Average Times Spoken per Debate\n')
+        for i in candidate_stat_list:
+            total.write(
+                i['candidate']+','
+                +str(i['count_total_unique_words'])+','
+                +str(i['count_total_words_spoken'])+','
+                +str(i['total_debates'])+','
+                +str(i['total_times_spoken'])+','
+                +str(i['avg_times_spoken_per_debate'])
+                +'\n'
+            ) # add other stats here... like all text: +','+i['text'])
+
+
 def main():
+    # static list of all the debate transcripts
     file_list = [
             '9_republican_debate.txt',
             '8_republican_debate.txt',
@@ -137,6 +248,7 @@ def main():
             '1_republican_debate.txt'
             ]
 
+    # static list of all the debate moderators
     moderator_list = [
                 'KELLY',
                 'BAIER',
@@ -159,6 +271,7 @@ def main():
                 'STRASSEL'
             ]
 
+    # static list of all the debate candidates
     candidate_list = [
                 'TRUMP',
                 'CRUZ',
@@ -173,36 +286,35 @@ def main():
                 'FIORINA'
             ]
 
+    # list to contain all of a candidate's spoken words
+    candidate_totals_list = []
+
+    for i in candidate_list:
+        candidate_totals_list.append({
+            'candidate':i,
+            'text':'',
+            'total_debates':0,
+            'total_times_spoken':0
+        })
+
     for file in file_list:
         text = open_file(file)
         speaker_list, interjection_list = get_speakers(text)
         parsed_text = split_on_speaker(speaker_list, text)
         speaker_stat_list = speaker_stats(speaker_list, parsed_text)
+        #debate_main_file(speaker_stat_list, candidate_list, file)
+        #debate_fd_file(speaker_stat_list, candidate_list, file)
 
-        with open('debate_main.csv','a') as main:
-            for i in speaker_stat_list:
-                if i['speaker'] in candidate_list:
-                    main.write(
-                        i['speaker']+','
-                        +str(i['count'])+','
-                        +str(i['count_unique_words'])+','
-                        +str(i['count_words_spoken'])+','
-                        +str(i['avg_words_spoken'])+','
-                        +file
-                        +'\n'
-                    ) # add other stats here... like all text: +','+i['text'])
+        for i in speaker_stat_list:
+            for candidate in candidate_totals_list:
+                if i['speaker'] == candidate['candidate']:
+                    candidate['text'] += i['text']
+                    candidate['total_debates'] += 1
+                    candidate['total_times_spoken'] += i['count']
 
-        with open('debate_fd.csv','a') as fd:
-            for i in speaker_stat_list:
-                if i['speaker'] in candidate_list:
-                    for dist in i['fd']:
-                        (key, value) = dist
-                        fd.write(
-                            i['speaker']+','
-                            +str(key)+','
-                            +str(value)+','
-                            +file
-                            +'\n'
-                        ) # add other stats here... like all text: +','+i['text'])
+    candidate_stat_list = candidate_totals(candidate_totals_list)
+    #debate_total_fd_file(candidate_stat_list)
+    debate_total_file(candidate_stat_list)
+
 
 main()
