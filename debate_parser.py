@@ -56,11 +56,39 @@ def split_on_speaker(speaker_list, text):
     i = 0
     parsed_text = []
 
+    # add a variable to know the order of speakers
+    speaking_order = 0
+
+    # add a variable to track the index of the last item added to parsed_text
+    parsed_text_index = 0
+
     # because of how the text is structured each item that is a speaker
     # will have the speaker's text immediately following it i.e. i+1
     while i < len(speaker_text) - 1:
         if speaker_text[i] in speaker_list:
-            parsed_text.append({'speaker':speaker_text[i], 'text':speaker_text[i+1]})
+            # check to see if prior speaker is same, and then add to prior text as opposed to increment
+            if len(parsed_text) > 0:
+                if parsed_text[parsed_text_index]['speaker'] == speaker_text[i]:
+                    parsed_text[parsed_text_index]['text'] += speaker_text[i+1]
+                else:
+                    # increment order everytime successfully identified as a speaker
+                    speaking_order += 1
+                    parsed_text.append({
+                        'speaker':speaker_text[i],
+                        'text':speaker_text[i+1],
+                        'order': speaking_order
+                    })
+
+                    if len(parsed_text) > 0:
+                        parsed_text_index = len(parsed_text) - 1
+
+            else:
+                speaking_order += 1
+                parsed_text.append({
+                    'speaker':speaker_text[i],
+                    'text':speaker_text[i+1],
+                    'order': speaking_order
+                })
         i += 1
 
     return parsed_text
@@ -78,7 +106,9 @@ def speaker_stats(speaker_list, parsed_text):
             'count_words_spoken':0,
             'avg_words_spoken':0,
             # add additional stats here
-            'fd':[]
+            'fd':[],
+            'min_order':1000,
+            'max_order':0
         })
 
     for i in parsed_text:
@@ -90,6 +120,10 @@ def speaker_stats(speaker_list, parsed_text):
                 nltk_text = nltk.Text(tokens)
                 nltk_text_scrubbed = [w for w in nltk_text if w.isalpha()]
                 item['count_words_spoken'] += len(nltk_text_scrubbed)
+                if i['order'] > item['max_order']:
+                    item['max_order'] = i['order']
+                if i['order'] < item['min_order']:
+                    item['min_order'] = i['order']
 
     # nltk processing of text
     for item in speaker_stat_list:
@@ -169,10 +203,17 @@ def candidate_totals(candidate_totals_list):
     return candidate_stat_list
 
 
-def debate_main_file(speaker_stat_list, candidate_list):
+def debate_main_file(speaker_stat_list, candidate_list, file):
+    # see if file exists, initialize & write headers if not
+    try:
+        with open('debate_main.csv') as main:
+            pass
+    except IOError as e:
+        with open('debate_main.csv','a') as main:
+            # add column headers
+            main.write('Speaker,Times Spoken,Unique Words,Total Words,Average Words,First Spoken,Last Spoken,Debate\n')
+
     with open('debate_main.csv','a') as main:
-        # add column headers
-        main.write('Speaker,Times Spoken,Unique Words,Total Words,Average Words,Debate\n')
         for i in speaker_stat_list:
             if i['speaker'] in candidate_list:
                 main.write(
@@ -181,15 +222,25 @@ def debate_main_file(speaker_stat_list, candidate_list):
                     +str(i['count_unique_words'])+','
                     +str(i['count_words_spoken'])+','
                     +str(i['avg_words_spoken'])+','
-                    +file
-                    +'\n'
+                    +str(i['min_order'])+','
+                    +str(i['max_order'])+','
+                    +str(file)
+                    +str('\n')
                 ) # add other stats here... like all text: +','+i['text'])
 
 
 def debate_fd_file(speaker_stat_list, candidate_list, file):
+    # see if file exists, initialize & write headers if not
+    try:
+        with open('debate_fd.csv') as fd:
+            pass
+    except IOError as e:
+        with open('debate_fd.csv','a') as fd:
+            # add column headers
+            fd.write('Speaker,Word,Frequency,Debate\n')
+
+
     with open('debate_fd.csv','a') as fd:
-        # add column headers
-        fd.write('Speaker,Word,Frequency,Debate\n')
         for i in speaker_stat_list:
             if i['speaker'] in candidate_list:
                 for dist in i['fd']:
@@ -198,15 +249,22 @@ def debate_fd_file(speaker_stat_list, candidate_list, file):
                         i['speaker']+','
                         +str(key)+','
                         +str(value)+','
-                        +file
-                        +'\n'
+                        +str(file)
+                        +str('\n')
                     ) # add other stats here... like all text: +','+i['text'])
 
 
-def debate_total_fd_file(candidate_stat_list, file):
+def debate_total_fd_file(candidate_stat_list):
+    # see if file exists, initialize & write headers if not
+    try:
+        with open('debate_total_fd.csv') as fd:
+            pass
+    except IOError as e:
+        with open('debate_total_fd.csv','a') as fd:
+            # add column headers
+            fd.write('Speaker,Word,Frequency\n')
+
     with open('debate_total_fd.csv','a') as fd:
-        # add column headers
-        fd.write('Speaker,Word,Frequency\n')
         for i in candidate_stat_list:
             for dist in i['total_fd']:
                 (key, value) = dist
@@ -219,9 +277,16 @@ def debate_total_fd_file(candidate_stat_list, file):
 
 
 def debate_total_file(candidate_stat_list):
+    # see if file exists, initialize & write headers if not
+    try:
+        with open('debate_total.csv') as file:
+            pass
+    except IOError as e:
+        with open('debate_total.csv','a') as total:
+            # add column headers
+            total.write('Speaker,Unique Words,Total Words,Total Debates Present,Times Spoken,Average Times Spoken per Debate\n')
+
     with open('debate_total.csv','a') as total:
-        # add column headers
-        total.write('Speaker,Unique Words,Total Words,Total Debates Present,Times Spoken,Average Times Spoken per Debate\n')
         for i in candidate_stat_list:
             total.write(
                 i['candidate']+','
@@ -237,6 +302,9 @@ def debate_total_file(candidate_stat_list):
 def main():
     # static list of all the debate transcripts
     file_list = [
+            '12_republican_debate.txt',
+            '11_republican_debate.txt',
+            '10_republican_debate.txt',
             '9_republican_debate.txt',
             '8_republican_debate.txt',
             '7_republican_debate.txt',
@@ -302,8 +370,8 @@ def main():
         speaker_list, interjection_list = get_speakers(text)
         parsed_text = split_on_speaker(speaker_list, text)
         speaker_stat_list = speaker_stats(speaker_list, parsed_text)
-        #debate_main_file(speaker_stat_list, candidate_list, file)
-        #debate_fd_file(speaker_stat_list, candidate_list, file)
+        debate_main_file(speaker_stat_list, candidate_list, file)
+        debate_fd_file(speaker_stat_list, candidate_list, file)
 
         for i in speaker_stat_list:
             for candidate in candidate_totals_list:
@@ -313,7 +381,7 @@ def main():
                     candidate['total_times_spoken'] += i['count']
 
     candidate_stat_list = candidate_totals(candidate_totals_list)
-    #debate_total_fd_file(candidate_stat_list)
+    debate_total_fd_file(candidate_stat_list)
     debate_total_file(candidate_stat_list)
 
 
