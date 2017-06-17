@@ -10,11 +10,35 @@ import re
 
 
 def open_file(file_name):
+    """
+    Basic function to read a text file into memory
+
+    :param : file_name path to text file
+
+    :ret : text in memory of
+    """
     file = open(file_name)
     text = file.read()
     return text
 
 def get_speakers(text):
+    """
+    Extract Speaker names from Text based on capitalization
+    and colons i.e. each Speaker's name is formatted like:
+
+    `SPEAKER: What they speaker said.`
+
+    Remove all audience reactions (i.e. Applause, Laughter)
+    from the list of Speaker names and build separate list of Interjections
+    Interjections are generally formmatted like:
+
+    `(INTERJECTION)`
+
+    :param : text path to text file
+
+    :ret : speaker_list list of individuals who spoke during the debat
+    :ret : interjection_list list of audience reactions
+    """
     # split file on line breaks
     line_list = text.split('\n')
     temp_list = []
@@ -32,7 +56,7 @@ def get_speakers(text):
 
     # create interjection_list for (APPLAUSE), etc. based on '('
     for i in speaker_list:
-        if i.find('(') != -1:
+        if i.find('(') != -1 or i.find(')') != -1: # or i.find(' ') != -1:
             interjection_list.append(i)
 
     # remove any interjections from speaker_list
@@ -44,10 +68,22 @@ def get_speakers(text):
 
 
 def split_on_speaker(speaker_list, text):
-    # split text on each speaker in speaker_list
+    """
+    Split text on each speaker's name in speaker_list
+    to group each individual's responses during each debate
+
+    :param : speaker_list list of speaker's names
+    :param : text of the debate
+
+    :ret : parsed_text list of dict that contains speaker name order of text, etc.
+    """
+    # each speaker's name is used to split the text
+    # format them into a regex pattern for split
     delimiters = speaker_list
     pattern = '|'.join(map(re.escape, delimiters))
     pattern = '('+pattern+')'
+
+    # split the text using the new delimiters
     speaker_text = re.split(pattern, text)
 
     # set up variables to loop through each item in speaker_text sequentially
@@ -95,6 +131,14 @@ def split_on_speaker(speaker_list, text):
 
 
 def speaker_stats(speaker_list, parsed_text):
+    """
+    Calculate basic stats about what each speaker said per debate
+
+    :param : speaker_list
+    :param : parsed_text
+
+    :ret : speaker_stat_list list of dicts of speaker stats
+    """
     speaker_stat_list = []
 
     for i in speaker_list:
@@ -137,7 +181,7 @@ def speaker_stats(speaker_list, parsed_text):
         fd = nltk.FreqDist(nltk_text_scrubbed)
         # get unique words
         item['count_unique_words'] = len(fd)
-        # get average word count
+        # get average word count per time speaking
         try:
             item['avg_words_spoken'] = item['count_words_spoken']/item['count']
         except ZeroDivisionError:
@@ -158,7 +202,14 @@ def speaker_stats(speaker_list, parsed_text):
     return speaker_stat_list
 
 
-def candidate_totals(candidate_totals_list):
+def speaker_totals(candidate_totals_list):
+    """
+    Calculate summary stats about what each speaker said during all debates
+
+    :param : candidate_totals_list aggregated text of all debates per speaker
+
+    :ret : candidate_stat_list list of dicts of speaker stats
+    """
     candidate_stat_list = []
 
     for i in candidate_totals_list:
@@ -169,7 +220,8 @@ def candidate_totals(candidate_totals_list):
             'count_total_unique_words':0,
             'count_total_words_spoken':0,
             'total_fd':[],
-            'avg_times_spoken_per_debate':0
+            'avg_times_spoken_per_debate':0,
+            'avg_words_per_time_spoken':0
         })
 
     # nltk processing of text
@@ -199,6 +251,9 @@ def candidate_totals(candidate_totals_list):
 
     for i in candidate_stat_list:
         i['avg_times_spoken_per_debate'] = i['total_times_spoken']/i['total_debates']
+
+    for i in candidate_stat_list:
+        i['avg_words_per_time_spoken'] = i['count_total_words_spoken']/i['total_times_spoken']
 
     return candidate_stat_list
 
@@ -284,7 +339,7 @@ def debate_total_file(candidate_stat_list):
     except IOError as e:
         with open('debate_total.csv','a') as total:
             # add column headers
-            total.write('Speaker,Unique Words,Total Words,Total Debates Present,Times Spoken,Average Times Spoken per Debate\n')
+            total.write('Speaker,Unique Words,Total Words,Total Debates Present,Times Spoken,Average Times Spoken per Debate,Average Words Per Time Spoken\n')
 
     with open('debate_total.csv','a') as total:
         for i in candidate_stat_list:
@@ -294,7 +349,8 @@ def debate_total_file(candidate_stat_list):
                 +str(i['count_total_words_spoken'])+','
                 +str(i['total_debates'])+','
                 +str(i['total_times_spoken'])+','
-                +str(i['avg_times_spoken_per_debate'])
+                +str(i['avg_times_spoken_per_debate'])+','
+                +str(i['avg_words_per_time_spoken'])
                 +'\n'
             ) # add other stats here... like all text: +','+i['text'])
 
@@ -380,7 +436,7 @@ def main():
                     candidate['total_debates'] += 1
                     candidate['total_times_spoken'] += i['count']
 
-    candidate_stat_list = candidate_totals(candidate_totals_list)
+    candidate_stat_list = speaker_totals(candidate_totals_list)
     debate_total_fd_file(candidate_stat_list)
     debate_total_file(candidate_stat_list)
 
