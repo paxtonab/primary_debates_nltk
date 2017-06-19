@@ -1,0 +1,24 @@
+Party,Order,File,Friendly Name,City,State,Location,Date
+Republican,13,13_republican_debate.txt,13th GOP Debate,Salt Lake City,Utah,,2016-03-21
+Republican,12,12_republican_debate.txt,12th GOP Debate,Miami,Florida,University of Miami,2016-03-10
+Republican,11,11_republican_debate.txt,11th GOP Debate,Detroit,Michigan,The Fox Theater,2016-03-03
+Republican,10,10_republican_debate.txt,10th GOP Debate,Houston,Texas,,2016-02-25
+Republican,9,9_republican_debate.txt,9th GOP Debate,Greenville,South Carolina,The Peace Center,2016-02-13
+Republican,8,8_republican_debate.txt,8th GOP Debate,Manchester,New Hampshire,St. Anselm's College Institute of Politics,2016-02-06
+Republican,7,7_republican_debate.txt,7th GOP Debate,Des Moines,Iowa,Iowa Events Center,2016-01-28
+Republican,6,6_republican_debate.txt,6th GOP Debate,Charleston,South Carolina,North Charleston Coliseum and Performing Arts Center,2016-01-14
+Republican,5,5_republican_debate.txt,5th GOP Debate,Las Vegas,Nevada,The Venetian,2015-12-15
+Republican,4,4_republican_debate.txt,4th GOP Debate,Milwaukee,Wisconsin,Milwaukee Theatre,2015-11-10
+Republican,3,3_republican_debate.txt,3rd GOP Debate,Boulder,Colorado,University of Colorado Boulder,2015-10-28
+Republican,2,2_republican_debate.txt,2nd GOP Debate,Simi Valley,California,Reagan Library,2015-09-16
+Republican,1,1_republican_debate.txt,1st GOP Debate,Cleveland,Ohio,Quicken Loans Arena,2015-08-06
+Democratic,10,10_democractic_debate.txt,10th Democratic Debate,Brooklyn,New York,Duggal Greenhouse,2016-02-25
+Democratic,9,9_democractic_debate.txt,9th Democratic Debate,Miami,Florida,Miami Dade College,2016-03-09
+Democratic,8,8_democractic_debate.txt,8th Democratic Debate,Flint,Michigan,The Whiting Auditorium,2016-03-06
+Democratic,7,7_democractic_debate.txt,7th Democratic Debate,Milwaukee,Wisconsin,UW-Milwaukee,2016-02-11
+Democratic,6,6_democractic_debate.txt,6th Democratic Debate,Durham,New Hampshire,University of New Hampshire,2016-02-04
+Democratic,5,5_democractic_debate.txt,5th Democratic Debate,Des Moines,Iowa,Drake University,2016-01-25
+Democratic,4,4_democractic_debate.txt,4th Democratic Debate,Charleston,South Carolina,Charleston,2016-01-17
+Democratic,3,3_democractic_debate.txt,3rd Democratic Debate,Manchester,New Hampshire,Saint Anselm College,2015-12-19
+Democratic,2,2_democractic_debate.txt,2nd Democratic Debate,Des Moines,Iowa,Drake University,2015-11-14
+Democratic,1,1_democractic_debate.txt,1st Democratic Debate,Las Vegas,Nevada,Wynn,2015-10-13
