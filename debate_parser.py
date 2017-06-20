@@ -2,6 +2,7 @@ from nltk.corpus import stopwords
 
 import models
 import nltk
+import os
 import re
 
 
@@ -18,7 +19,10 @@ def open_file(file_name):
 
     :ret : text in memory of
     """
-    file = open(file_name)
+    dir = os.path.dirname(__file__)
+    file_path = '{}/debates/{}'.format(dir, file_name)
+    print(file_path)
+    file = open(file_path)
     text = file.read()
     return text
 

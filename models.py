@@ -102,64 +102,14 @@ class SpeakerText(Model):
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
 
-#
-#
-#
-# class ParsedText(Model):
-# 	name = CharField()
-# 	description = CharField(null=True)
-# 	created = DateTimeField(default=datetime.datetime.now)
-#
-# 	class Meta:
-# 		database = DATABASE
-# 		order_by = ('name',)
-#
-# 	@classmethod
-# 	def create_exercise(cls, name, description=None):
-# 		try:
-# 			with DATABASE.transaction():
-# 				cls.create(
-# 					name=name,
-# 					description=description,
-# 				)
-# 		except IntegrityError:
-# 			raise ValueError("Exercise exists.")
-#
-#
-# class Relationship(Model):
-# 	user_id = ForeignKeyField(User, related_name='user_id')
-# 	workout_id = ForeignKeyField(Workout, related_name ='workout_id')
-# 	created = DateTimeField(default=datetime.datetime.now)
-#
-# 	class Meta:
-# 		database = DATABASE
-# 		indexes = (
-# 			(('user_id', 'workout_id'), True),
-# 		)
-#
-#
-# class Tracked(Model):
-# 	relationship_id = CharField(null=True)#ForeignKeyField(Relationship, related_name='relationship_id')
-# 	exercise_id = CharField(null=True)#ForeignKeyField(Exercise, related_name='exercise_id')
-# 	created = DateTimeField(default=datetime.datetime.now)
-# 	rounds = IntegerField(null=True)
-# 	weight = IntegerField(null=True)
-# 	week = IntegerField(null=True)
-#
-# 	class Meta:
-# 		database = DATABASE
-#
-# 	@classmethod
-# 	def create_tracked(cls, relationship_id, exercise):
-# 		try:
-# 			exercise_lookup = Exercise.get(Exercise.name**exercise)
-# 		except DoesNotExist:
-# 			pass
-# 		else:
-# 			Tracked.create(
-# 				relationship_id = relationship_id,
-# 				exercise_id = exercise_lookup.id
-# 			)
+
+class Candidate(Model):
+	"""
+	Class to represent candidates vs. moderators
+	Need some sort of scrubbing and/or replacement dict
+	to map from the speaker class
+	"""
+	pass
 
 
 def initialize():
