@@ -22,6 +22,7 @@ class Debate(Model):
 		database = DATABASE
 		order_by = ('party','order',)
 
+
 	@classmethod
 	def initialize_debates(cls):
 		with DATABASE.transaction():
@@ -36,6 +37,18 @@ class Debate(Model):
 					raise ValueError("Debate exists {}".format(row['File'].split('.')[1]))
 
 
+	@classmethod
+	def get_debates(cls):
+		"""
+		:ret : file_list list of debate file names
+		"""
+		try:
+			file_list = [debate.file_name for debate in cls.select()]
+			return file_list
+		except Exception as e:
+			return e
+
+
 class Speaker(Model):
 	name = CharField(null=False)
 	debate = ForeignKeyField(Debate, related_name='debate_speaker')
@@ -43,6 +56,7 @@ class Speaker(Model):
 	class Meta:
 		database = DATABASE
 		order_by = ('debate','name',)
+
 
 	@classmethod
 	def create_speaker(cls, name, file_name):
@@ -52,6 +66,19 @@ class Speaker(Model):
 				cls.create(name=name, debate=debate_id)
 		except IntegrityError:
 			raise ValueError("Speaker exists")
+
+
+	@classmethod
+	def get_speakers(cls, file_name):
+		"""
+		:params : file_name name of file to limit speakers by
+		:ret : speaker_list list of speaker names
+		"""
+		try:
+			speaker_list = [speaker.name for speaker in cls.select() if speaker.debate.file_name == file_name]
+			return speaker_list
+		except Exception as e:
+			return e
 
 
 class SpeakerText(Model):
@@ -64,6 +91,7 @@ class SpeakerText(Model):
 		database = DATABASE
 		order_by = ('debate','speaker','order',)
 
+
 	@classmethod
 	def create_speaker_text(cls, speaker_text, order, speaker_name, file_name):
 		try:
@@ -73,6 +101,7 @@ class SpeakerText(Model):
 				cls.create(speaker_text=speaker_text, order=order, speaker=speaker_id, debate=debate_id)
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
+
 #
 #
 #

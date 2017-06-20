@@ -8,16 +8,9 @@ def initialize_debates():
     models.Debate.initialize_debates()
 
 
-def get_debate_file_names():
-    # get list of all the debate file names
-    file_list = [debate.file_name for debate in models.Debate.select()]
-
-    return file_list
-
-
 def initialize_speakers():
     # get file names
-    file_list = get_debate_file_names()
+    file_list = models.Debate.get_debates()
 
     # loop through files and get speakers and text
     for file_name in file_list:
@@ -32,16 +25,9 @@ def initialize_speakers():
             models.Speaker.create_speaker(speaker, file_name)
 
 
-def get_speaker_names(file_name):
-    # get list of all the debate file names
-    speaker_list = [speaker.name for speaker in models.Speaker.select() if speaker.debate.file_name == file_name]
-
-    return speaker_list
-
-
 def initialize_speakers_text():
     # get file names
-    file_list = get_debate_file_names()
+    file_list = models.Debate.get_debates()
 
     # loop through files and get speakers and text
     for file_name in file_list:
@@ -49,7 +35,7 @@ def initialize_speakers_text():
         file_text = debate_parser.open_file(file_name)
 
         # get the speakers for specific file
-        speaker_list = get_speaker_names(file_name)
+        speaker_list = models.Speaker.get_speakers(file_name)
 
         # get the parsed text with new speakers
         parsed_text = debate_parser.split_on_speaker(speaker_list, file_text)
