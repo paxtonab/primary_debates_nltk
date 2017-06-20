@@ -1,9 +1,9 @@
 from nltk.corpus import stopwords
 
 import debate_parser as dp
+import models
 import nltk
 import re
-
 
 
 def speaker_stats(speaker_list, parsed_text):
@@ -317,4 +317,36 @@ def main():
     debate_total_file(candidate_stat_list)
 
 
-main()
+def main2():
+    # create database and initialize debates
+    models.initialize()
+    models.Debates.initialize_debates()
+
+    # static list of all the debate transcripts
+    file_list = [
+            '12_republican_debate.txt',
+            '11_republican_debate.txt',
+            '10_republican_debate.txt',
+            '9_republican_debate.txt',
+            '8_republican_debate.txt',
+            '7_republican_debate.txt',
+            '6_republican_debate.txt',
+            '5_republican_debate.txt',
+            '4_republican_debate.txt',
+            '3_republican_debate.txt',
+            '2_republican_debate.txt',
+            '1_republican_debate.txt'
+            ]
+
+    # loop through files and create speakers
+    for file_name in file_list:
+        file_text = dp.open_file(file_name)
+        speaker_list, interjection_list = dp.get_speakers(file_text)
+
+        for speaker in speaker_list:
+            models.Speaker.create_speaker(speaker, file_name)
+
+        parsed_text = dp.split_on_speaker(speaker_list, file_text)
+
+        for pt in parsed_text:
+            models.SpeakerText.create_speaker_text(pt['text'], pt['order'], pt['speaker'], file_name)
