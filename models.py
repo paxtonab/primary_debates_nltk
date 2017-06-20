@@ -7,7 +7,7 @@ from peewee import *
 DATABASE = SqliteDatabase('debates.db')
 
 
-class Debates(Model):
+class Debate(Model):
 	file_name = CharField(unique=True)
 	debate_name = CharField(null=False)
 	order = IntegerField(null=False)
@@ -38,7 +38,7 @@ class Debates(Model):
 
 class Speaker(Model):
 	name = CharField(null=False)
-	debate = ForeignKeyField(Debates, related_name='debate_speaker')
+	debate = ForeignKeyField(Debate, related_name='debate_speaker')
 
 	class Meta:
 		database = DATABASE
@@ -47,7 +47,7 @@ class Speaker(Model):
 	@classmethod
 	def create_speaker(cls, name, file_name):
 		try:
-			debate_id = Debates.get(Debates.file_name == file_name).id
+			debate_id = Debate.get(Debate.file_name == file_name).id
 			with DATABASE.transaction():
 				cls.create(name=name, debate=debate_id)
 		except IntegrityError:
@@ -58,7 +58,7 @@ class SpeakerText(Model):
 	speaker_text = CharField(null=False)
 	order = IntegerField(null=False)
 	speaker = ForeignKeyField(Speaker, related_name='speaker_speaker_text')
-	debate = ForeignKeyField(Debates, related_name='debate_speaker_text')
+	debate = ForeignKeyField(Debate, related_name='debate_speaker_text')
 
 	class Meta:
 		database = DATABASE
@@ -68,7 +68,7 @@ class SpeakerText(Model):
 	def create_speaker_text(cls, speaker_text, order, speaker_name, file_name):
 		try:
 			with DATABASE.transaction():
-				debate_id = Debates.get(Debates.file_name == file_name).id
+				debate_id = Debate.get(Debate.file_name == file_name).id
 				speaker_id = Speaker.get(Speaker.name == speaker_name, Speaker.debate == debate_id).id
 				cls.create(speaker_text=speaker_text, order=order, speaker=speaker_id, debate=debate_id)
 		except IntegrityError:
@@ -135,5 +135,5 @@ class SpeakerText(Model):
 
 def initialize():
 	DATABASE.connect()
-	DATABASE.create_tables([Debates, Speaker, SpeakerText], safe=True)
+	DATABASE.create_tables([Debate, Speaker, SpeakerText], safe=True)
 	DATABASE.close()
