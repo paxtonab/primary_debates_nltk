@@ -52,6 +52,7 @@ class Debate(Model):
 class Speaker(Model):
 	name = CharField(null=False)
 	debate = ForeignKeyField(Debate, related_name='debate_speaker')
+	mapped_name = CharField(null=True)
 
 	class Meta:
 		database = DATABASE
@@ -71,12 +72,193 @@ class Speaker(Model):
 	@classmethod
 	def get_speakers(cls, file_name):
 		"""
+		Get a list of all the speakers in a specific debate text file
+
 		:params : file_name name of file to limit speakers by
 		:ret : speaker_list list of speaker names
 		"""
 		try:
 			speaker_list = [speaker.name for speaker in cls.select() if speaker.debate.file_name == file_name]
 			return speaker_list
+		except Exception as e:
+			return e
+
+
+	@classmethod
+	def get_speakers_debates(cls, speaker_name, use_mapped_name=True):
+		"""
+		Get all the debates a speaker was present in
+
+		:params : speaker_name name of speaker to get debates for
+		:params : use_mapped_name bool of whether to query with mapped_name or speaker_name
+		:ret : speaker_list list of speaker names
+		"""
+		try:
+			if use_mapped_name:
+				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.mapped_name == speaker_name)]
+			else:
+				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.name == speaker_name)]
+			return debate_list
+		except Exception as e:
+			return e
+
+
+	@classmethod
+	def get_mapped_names(cls):
+		"""
+		Map all Speaker.name to a friendly version to eliminate typos
+
+		:params : file_name name of file to limit speakers by
+		:ret : speaker_list list of speaker names
+		"""
+		replacement_dict ={
+			' LOOK BACK': '',
+			' OPEN GRAPHIC': '',
+			' OPEN INTERACTIVE GRAPHIC': '',
+			' OUR ANALYSIS': '',
+			'. COOPER': 'COOPER',
+			'ALEXIS': 'ALEXIS KULASH, DRAKE UNIVERSITY STUDENT',
+			'ALEXIS KULASH, DRAKE UNIVERSITY STUDENT': '',
+			'ANNOUNCER': '',
+			'ARNOLD WOODS, PRESIDENT, DES MOINES NAACP': '',
+			'ARRARAS': 'ARRASAS',
+			'ARRASAS': '',
+			'AUDIENCE': '',
+			'AUDIENCE MEMBER': '',
+			'BAIER': '',
+			'BAKER': '',
+			'BARITROMO': 'BARTIROMO',
+			'BARTIROMO': '',
+			'BASH': '',
+			'BERNIE SANDERS': 'SANDERS',
+			'BISHOP': '',
+			'BLITZER': '',
+			'BRETT ROSENGREN, STUDENT': 'BRETT ROSENGREN, STUDENT',
+			'BROWNLEE': '',
+			'BUSH': '',
+			'CARSON': '',
+			'CAVUTO': '',
+			'CELESTE': '',
+			'CHAFEE': '',
+			'CHRISTIE': '',
+			'CLINTON': '',
+			'COLLISON': '',
+			'COOPER': '',
+			'CRAMER': '',
+			'CRAWFORD': '',
+			'CRUZ': '',
+			'CRUZ ': 'CRUZ',
+			'CUBA': '',
+			'CUOMO': '',
+			'CURZ': 'CRUZ',
+			'DEBORAH PLUMMER': '',
+			'DICK GOODSON, CHAIRMAN, DES MOINES COMMITTEE ON FOREIGN RELATIONS': '',
+			'DICKERSON': '',
+			'DINAN': '',
+			'ELECTION 2016': '',
+			'END​': '',
+			'EPPERSON': '',
+			'FIONNA': 'FIORINA',
+			'FIORINA': '',
+			'FRANCHESCA RAMSEY': '',
+			'FRANTA': '',
+			'FROM OUR ADVERTISERS': '',
+			'GARRET': '',
+			'GARRETT': '',
+			'GOODSON': '',
+			'GRAPHIC': '',
+			'HAM': '',
+			'HANNITY': '',
+			'HARMAN': '',
+			'HARWOOD': '',
+			'HEWITT': '',
+			'HILLARY CLINTON': 'CLINTON',
+			'HOLT': '',
+			'HUCKABEE': '',
+			'IFILL': '',
+			'INTERACTIVE GRAPHIC': '',
+			'JENNA BISHOP, DRAKE UNIVERSITY LAW SCHOOL STUDENT': '',
+			'JOHN DICKERSON': '',
+			'JORGE RAMOS': '',
+			'JOSH JACOB, COLLEGE STUDENT': '',
+			'JOY LASSEN': '',
+			'JUL 13': '',
+			'KAISCH': 'KASICH',
+			'KARL': '',
+			'KASICH': '',
+			'KATHIE OBRADOVICH': '',
+			'KELLY': '',
+			'KEVIN COONEY': '',
+			'LASSEN': '',
+			'LEMON': '',
+			'LEVESQUE': '',
+			'LIVE COVERAGE': '',
+			'LOPEZ': '',
+			'LOUIS': '',
+			'MADDOW': '',
+			'MAJOR GARRETT': '',
+			'MALE': '',
+			"MARTIN O'MALLEY": "O'MALLEY",
+			'MCELVEEN': '',
+			'MEGAN': 'KELLY',
+			'MEGYN': 'KELLY',
+			'MILLER': '',
+			'MITCHELL': '',
+			'MODERATOR': '',
+			'MORE': '',
+			'MUIR': '',
+			'NANCY CORDES': '',
+			'NEWS ANALYSIS': '',
+			'NEWS CLIPS': '',
+			"O'CONNOR": '',
+			"O'MALLEY": '',
+			"O'REILLY": '',
+			"O’MALLEY": "O'MALLEY",
+			'PAUL': '',
+			'PERRY': '',
+			'PLUMMER': '',
+			'QUESTION': '',
+			'QUICK': '',
+			'QUINTANILLA': '',
+			'RADDATZ': '',
+			'RAMOS': '',
+			'RELATED COVERAGE': '',
+			'RITCHIE': '',
+			'ROSENGREN': '',
+			'RUBIO': '',
+			'SALINAS': '',
+			'SANDERFS': 'SANDERS',
+			'SANDERS': '',
+			'SANTELLI': '',
+			'SEAN COLLISON': '',
+			'SMITH': '',
+			'STEPHANOPOULOS': '',
+			'STRASSEL': '',
+			'TALKER': '',
+			'TAPPER': '',
+			'TAPPER ': 'TAPPER',
+			'TODD': '',
+			'TRUMO': 'TRUMP',
+			'TRUMP': '',
+			'TUMULTY': '',
+			'UNIDENTIFIABLE MALE': '',
+			'UNIDENTIFIED FEMALE': '',
+			'UNIDENTIFIED MALE': '',
+			'WALKER': '',
+			'WALKRE': 'WALKER',
+			'WALLACE': '',
+			'WALLCE': 'WALLACE',
+			'WALLLACE': 'WALLACE',
+			'WEBB': '',
+			'WILKINS': '',
+			'WOODRUFF': '',
+			'[ APPLAUSE ]': '',
+			'​​CRUZ': '​​CRUZ',
+			'‘ QUICK': 'QUICK',
+		}
+		try:
+			debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.name == speaker_name)]
+			return debate_list
 		except Exception as e:
 			return e
 
@@ -108,6 +290,13 @@ class Candidate(Model):
 	Class to represent candidates vs. moderators
 	Need some sort of scrubbing and/or replacement dict
 	to map from the speaker class
+	"""
+	pass
+
+
+class Interjection(Model):
+	"""
+	Class to represent interjections?
 	"""
 	pass
 
