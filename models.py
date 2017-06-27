@@ -179,7 +179,7 @@ class Speaker(Model):
 			'INTERACTIVE GRAPHIC': '',
 			'JENNA BISHOP, DRAKE UNIVERSITY LAW SCHOOL STUDENT': '',
 			'JOHN DICKERSON': '',
-			'JORGE RAMOS': '',
+			'JORGE RAMOS': 'RAMOS',
 			'JOSH JACOB, COLLEGE STUDENT': '',
 			'JOY LASSEN': '',
 			'JUL 13': '',
@@ -285,13 +285,25 @@ class SpeakerText(Model):
 			raise ValueError("speaker text already exists")
 
 
-class Candidate(Model):
+class SpeakerRole(Model):
 	"""
 	Class to represent candidates vs. moderators
 	Need some sort of scrubbing and/or replacement dict
 	to map from the speaker class
 	"""
-	pass
+	last_name = CharField(null=False)
+	role = IntegerField(null=False)
+	speaker = ForeignKeyField(Speaker, related_name='speaker_speaker_role')
+
+
+	@classmethod
+	def get_mapped_speaker(cls):
+		try:
+			with DATABASE.transaction():
+				speaker_id = Speaker.get(Speaker.mapped_name == cls.last_name).id
+				cls.update(speaker=speaker_id)
+		except IntegrityError:
+			raise ValueError("speaker text already exists")
 
 
 class Interjection(Model):
