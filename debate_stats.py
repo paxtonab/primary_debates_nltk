@@ -9,8 +9,8 @@ def speaker_stats(speaker_list, parsed_text):
     """
     Calculate basic stats about what each speaker said per debate
 
-    :param : speaker_list
-    :param : parsed_text
+    :param : speaker_list each speaker's name
+    :param : parsed_text each speaker's name, text & order
 
     :ret : speaker_stat_list list of dicts of speaker stats
     """

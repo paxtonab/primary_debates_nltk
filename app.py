@@ -35,10 +35,16 @@ def initialize_speakers_text():
         file_text = debate_parser.open_file(file_name)
 
         # get the speakers for specific file
-        speaker_list = models.Speaker.get_speakers(file_name)
+        speaker_list = models.Speaker.get_speakers(file_name, False)
 
         # get the parsed text with new speakers
         parsed_text = debate_parser.split_on_speaker(speaker_list, file_text)
 
         for pt in parsed_text:
             models.SpeakerText.create_speaker_text(pt['text'], pt['order'], pt['speaker'], file_name)
+
+
+def main():
+    initialize_debates()
+    initialize_speakers()
+    #initialize_speakers_text()
