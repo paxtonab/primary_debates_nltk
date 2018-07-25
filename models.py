@@ -84,6 +84,18 @@ class Speaker(Model):
 
 
 	@classmethod
+	def get_all_speakers(cls):
+		"""
+		Get a list of all the speakers
+
+		:ret : speaker_list list of speaker names
+		"""
+		speaker_list = [speaker.mapped_name for speaker in cls.select()]
+		speaker_list = list(set(speaker_list))
+		return speaker_list
+
+
+	@classmethod
 	def get_speakers(cls, file_name, use_mapped_name=True):
 		"""
 		Get a list of all the speakers in a specific debate text file
@@ -437,12 +449,13 @@ class SpeakerText(Model):
 
 	@classmethod
 	def get_speaker_text(cls, speaker_name, use_mapped_name=True):
+		speaker_name = speaker_name.strip().upper()
 		try:
 			if use_mapped_name:
-				speaker_text = [(st.order, st.speaker_text, st.speaker.mapped_name, st.debate.friendly_name) for st in cls.select() if st.speaker.mapped_name == speaker_name]
+				speaker_text = [{'order': st.order, 'text': st.speaker_text, 'speaker': st.speaker.mapped_name, 'debate': st.debate.friendly_name} for st in cls.select() if st.speaker.mapped_name == speaker_name]
 				return speaker_text
 			else:
-				speaker_text = [(st.order, st.speaker_text, st.speaker.mapped_name, st.debate.friendly_name) for st in cls.select() if st.speaker.speaker_name == speaker_name]
+				speaker_text = [{'order': st.order, 'text': st.speaker_text, 'speaker': st.speaker.mapped_name, 'debate': st.debate.friendly_name} for st in cls.select() if st.speaker.speaker_name == speaker_name]
 				return speaker_text
 		except Exception as e:
 			return e
@@ -514,13 +527,33 @@ class SpeakerText(Model):
 
 
 class Interjection(Model):
-	"""
-	Class to represent interjections?
-	"""
-	pass
+	interjection = CharField(null=False)
+
+	class Meta:
+		database = DATABASE
+		order_by = ('interjection',)
+
+
+	@classmethod
+	def create_interjection(cls, interjection):
+		try:
+			with DATABASE.transaction():
+				cls.create(
+							interjection=interjection
+							)
+		except IntegrityError:
+			raise ValueError("Interjection exists")
+
+	@classmethod
+	def get_interjections(cls):
+		try:
+			interjections = [i.interjection for i in cls.select()]
+			return interjections
+		except Exception as e:
+			return e
 
 
 def initialize():
 	DATABASE.connect()
-	DATABASE.create_tables([Debate, Speaker, SpeakerText], safe=True)
+	DATABASE.create_tables([Debate, Speaker, SpeakerText, Interjection], safe=True)
 	DATABASE.close()

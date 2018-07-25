@@ -51,7 +51,7 @@ def speaker_stats(speaker_list, parsed_text):
         # create NLTK text
         nltk_text = nltk.Text(tokens)
         # scrub punctuations
-        nltk_text_scrubbed = [w for w in nltk_text if w.isalpha()]
+        nltk_text_scrubbed = [w.lower() for w in nltk_text if w.isalpha()]
         # create frequency distribution
         fd = nltk.FreqDist(nltk_text_scrubbed)
         # get unique words

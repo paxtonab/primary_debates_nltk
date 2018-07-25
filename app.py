@@ -24,6 +24,10 @@ def initialize_speakers():
         for speaker in speaker_list:
             models.Speaker.create_speaker(speaker, file_name)
 
+        # loop through all interjections and populate table
+        for interjection in interjection_list:
+            models.Interjection.create_interjection(interjection)
+
 
 def initialize_speakers_text():
     # get file names
@@ -47,4 +51,4 @@ def initialize_speakers_text():
 def main():
     initialize_debates()
     initialize_speakers()
-    #initialize_speakers_text()
+    initialize_speakers_text()
