@@ -60,27 +60,26 @@ class Debate(Model):
 
 
 class Speaker(Model):
-	name = CharField(null=False)
-	debate = ForeignKeyField(Debate, related_name='debate_speaker')
-	mapped_name = CharField(null=True)
+	name = CharField(unique=True)
+	role = CharField(null=True)
 
 	class Meta:
 		database = DATABASE
-		order_by = ('debate','name',)
+		order_by = ('role','name',)
 
 
 	@classmethod
-	def create_speaker(cls, name, file_name):
+	def create_speaker(cls, name):
 		try:
-			debate_id = Debate.get(Debate.file_name == file_name).id
+			name = cls.get_mapped_name(name)
+			role = cls.get_role(name)
 			with DATABASE.transaction():
 				cls.create(
 							name=name,
-							debate=debate_id,
-							mapped_name=cls.get_mapped_name(name)
+							role=role
 							)
 		except IntegrityError:
-			raise ValueError("Speaker exists")
+			pass
 
 
 	@classmethod
@@ -90,49 +89,8 @@ class Speaker(Model):
 
 		:ret : speaker_list list of speaker names
 		"""
-		speaker_list = [speaker.mapped_name for speaker in cls.select()]
-		speaker_list = list(set(speaker_list))
+		speaker_list = [speaker.name for speaker in cls.select()]
 		return speaker_list
-
-
-	@classmethod
-	def get_speakers(cls, file_name, use_mapped_name=True):
-		"""
-		Get a list of all the speakers in a specific debate text file
-
-		:params : file_name name of file to limit speakers by
-		:ret : speaker_list list of speaker names
-		"""
-		try:
-			if use_mapped_name:
-				speaker_list = [speaker.mapped_name for speaker in cls.select() if speaker.debate.file_name == file_name]
-				speaker_list = list(set(speaker_list))
-				return speaker_list
-			else:
-				speaker_list = [speaker.name for speaker in cls.select() if speaker.debate.file_name == file_name]
-				speaker_list = list(set(speaker_list))
-				return speaker_list
-		except Exception as e:
-			return e
-
-
-	@classmethod
-	def get_speakers_debates(cls, speaker_name, use_mapped_name=True):
-		"""
-		Get all the debates a speaker was present in
-
-		:params : speaker_name name of speaker to get debates for
-		:params : use_mapped_name bool of whether to query with mapped_name or speaker_name
-		:ret : speaker_list list of speaker names
-		"""
-		try:
-			if use_mapped_name:
-				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.mapped_name == speaker_name)]
-			else:
-				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.name == speaker_name)]
-			return debate_list
-		except Exception as e:
-			return e
 
 
 	@classmethod
@@ -297,132 +255,212 @@ class Speaker(Model):
 			return e
 
 
-	# @classmethod
-	# def get_role(cls, mapped_name):
-	# 	"""
-	# 	Map a Speaker.mapped_name to a role:
-	# 									CANDIDATE,
-	# 									MODERATOR,
-	# 									AUDIENCE MEMBER,
-	# 									OTHER
-	#
-	# 	:params : name Speaker name to map to role
-	# 	:ret : role Speaker role
-	# 	"""
-	# 	replacement_dict ={
-	# 		'COOPER': 'MODERATOR',
-	# 		'KULASH': 'AUDIENCE MEMBER',
-	# 		'ANNOUNCER': '',
-	# 		'WOODS': 'AUDIENCE MEMBER',
-	# 		'ARRASAS': 'MODERATOR',
-	# 		'AUDIENCE': '',
-	# 		'AUDIENCE MEMBER': 'AUDIENCE MEMBER',
-	# 		'BAIER': '',
-	# 		'BAKER': '',
-	# 		'BARTIROMO': '',
-	# 		'BASH': '',
-	# 		'BISHOP': '',
-	# 		'BLITZER': '',
-	# 		'ROSENGREN': 'AUDIENCE MEMBER',
-	# 		'BROWNLEE': '',
-	# 		'BUSH': '',
-	# 		'CARSON': '',
-	# 		'CAVUTO': '',
-	# 		'CELESTE': '',
-	# 		'CHAFEE': '',
-	# 		'CHRISTIE': '',
-	# 		'CLINTON': '',
-	# 		'COLLISON': '',
-	# 		'COOPER': '',
-	# 		'CRAMER': '',
-	# 		'CRAWFORD': '',
-	# 		'CRUZ': '',
-	# 		'CUBA': '',
-	# 		'CUOMO': '',
-	# 		'PLUMMER': 'AUDIENCE MEMBER',
-	# 		'GOODSON': 'AUDIENCE MEMBER',
-	# 		'DICKERSON': '',
-	# 		'DINAN': '',
-	# 		'EPPERSON': '',
-	# 		'FIORINA': '',
-	# 		'RAMSEY': '',
-	# 		'FRANTA': '',
-	# 		'GARRET': '',
-	# 		'GOODSON': '',
-	# 		'HAM': '',
-	# 		'HANNITY': '',
-	# 		'HARMAN': '',
-	# 		'HARWOOD': '',
-	# 		'HEWITT': '',
-	# 		'HOLT': '',
-	# 		'HUCKABEE': '',
-	# 		'IFILL': '',
-	# 		'BISHOP': 'AUDIENCE MEMBER',
-	# 		'DICKERSON': '',
-	# 		'JORGE RAMOS': 'RAMOS',
-	# 		'JACOB': 'AUDIENCE MEMBER',
-	# 		'LASSEN': '',
-	# 		'KARL': '',
-	# 		'KASICH': '',
-	# 		'OBRADOVICH': '',
-	# 		'KELLY': '',
-	# 		'COONEY': '',
-	# 		'LASSEN': '',
-	# 		'LEMON': '',
-	# 		'LEVESQUE': '',
-	# 		'LOPEZ': '',
-	# 		'LOUIS': '',
-	# 		'MADDOW': '',
-	# 		'GARRETT': '',
-	# 		'MALE': 'AUDIENCE MEMBER',
-	# 		'MCELVEEN': '',
-	# 		'MILLER': '',
-	# 		'MITCHELL': '',
-	# 		'MODERATOR': '',
-	# 		'MORE': '',
-	# 		'MUIR': '',
-	# 		'CORDES': '',
-	# 		"O'CONNOR": '',
-	# 		"O'MALLEY": '',
-	# 		"O'REILLY": '',
-	# 		'PAUL': '',
-	# 		'PERRY': '',
-	# 		'PLUMMER': '',
-	# 		'QUICK': '',
-	# 		'QUINTANILLA': '',
-	# 		'RADDATZ': '',
-	# 		'RAMOS': '',
-	# 		'RITCHIE': '',
-	# 		'ROSENGREN': '',
-	# 		'RUBIO': '',
-	# 		'SALINAS': '',
-	# 		'SANDERS': '',
-	# 		'SANTELLI': '',
-	# 		'COLLISON': '',
-	# 		'SMITH': '',
-	# 		'STEPHANOPOULOS': '',
-	# 		'STRASSEL': '',
-	# 		'TALKER': '',
-	# 		'TAPPER': '',
-	# 		'TODD': '',
-	# 		'TRUMP': '',
-	# 		'TUMULTY': '',
-	# 		'UNIDENTIFIABLE MALE': 'AUDIENCE MEMBER',
-	# 		'UNIDENTIFIED FEMALE': 'AUDIENCE MEMBER',
-	# 		'UNIDENTIFIED MALE': 'AUDIENCE MEMBER',
-	# 		'WALKER': '',
-	# 		'WALLACE': '',
-	# 		'WEBB': '',
-	# 		'WILKINS': '',
-	# 		'WOODRUFF': ''
-	# 	}
-	# 	try:
-	# 		if replacement_dict[name] and replacement_dict[name] != '':
-	# 			return replacement_dict[name]
-	# 		else:
-	# 			return 'OTHER'
-	# 	except Exception as e:
-	# 		return e
+	@classmethod
+	def get_role(cls, name):
+		"""
+		Map a Speaker.name to a role:
+										CANDIDATE,
+										MODERATOR,
+										AUDIENCE,
+										OTHER
+
+		:params : name Speaker name to map to role
+		:ret : role Speaker role
+		"""
+		replacement_dict ={
+			'COOPER': 'MODERATOR',
+			'KULASH': 'AUDIENCE',
+			'ANNOUNCER': '',
+			'WOODS': 'AUDIENCE',
+			'ARRASAS': 'MODERATOR',
+			'AUDIENCE': 'AUDIENCE',
+			'AUDIENCE MEMBER': 'AUDIENCE',
+			'BAIER': '',
+			'BAKER': '',
+			'BARTIROMO': '',
+			'BASH': 'MODERATOR',
+			'BISHOP': '',
+			'BLITZER': 'MODERATOR',
+			'ROSENGREN': 'AUDIENCE',
+			'BROWNLEE': '',
+			'BUSH': 'CANDIDATE',
+			'CARSON': 'CANDIDATE',
+			'CAVUTO': '',
+			'CELESTE': '',
+			'CHAFEE': '',
+			'CHRISTIE': 'CANDIDATE',
+			'CLINTON': 'CANDIDATE',
+			'COLLISON': '',
+			'COOPER': 'MODERATOR',
+			'CRAMER': '',
+			'CRAWFORD': '',
+			'CRUZ': 'CANDIDATE',
+			'CUBA': '',
+			'CUOMO': 'CANDIDATE',
+			'PLUMMER': 'AUDIENCE',
+			'GOODSON': 'AUDIENCE',
+			'DICKERSON': '',
+			'DINAN': '',
+			'EPPERSON': '',
+			'FIORINA': 'CANDIDATE',
+			'RAMSEY': '',
+			'FRANTA': '',
+			'GARRET': '',
+			'GOODSON': '',
+			'HAM': '',
+			'HANNITY': 'MODERATOR',
+			'HARMAN': '',
+			'HARWOOD': '',
+			'HEWITT': '',
+			'HOLT': '',
+			'HUCKABEE': 'CANDIDATE',
+			'IFILL': '',
+			'BISHOP': 'AUDIENCE',
+			'DICKERSON': '',
+			'JORGE RAMOS': '',
+			'JACOB': 'AUDIENCE',
+			'LASSEN': '',
+			'KARL': '',
+			'KASICH': 'CANDIDATE',
+			'OBRADOVICH': '',
+			'KELLY': '',
+			'COONEY': '',
+			'LASSEN': '',
+			'LEMON': '',
+			'LEVESQUE': '',
+			'LOPEZ': '',
+			'LOUIS': '',
+			'MADDOW': 'MODERATOR',
+			'GARRETT': '',
+			'MALE': 'AUDIENCE',
+			'MCELVEEN': '',
+			'MILLER': '',
+			'MITCHELL': '',
+			'MODERATOR': 'MODERATOR',
+			'MORE': '',
+			'MUIR': '',
+			'CORDES': '',
+			"O'CONNOR": 'MODERATOR',
+			"O'MALLEY": 'CANDIDATE',
+			"O'REILLY": 'MODERATOR',
+			'PAUL': '',
+			'PERRY': 'CANDIDATE',
+			'PLUMMER': '',
+			'QUICK': '',
+			'QUINTANILLA': '',
+			'RADDATZ': '',
+			'RAMOS': '',
+			'RITCHIE': '',
+			'ROSENGREN': '',
+			'RUBIO': 'CANDIDATE',
+			'SALINAS': '',
+			'SANDERS': 'CANDIDATE',
+			'SANTELLI': '',
+			'COLLISON': '',
+			'SMITH': '',
+			'STEPHANOPOULOS': '',
+			'STRASSEL': '',
+			'TALKER': '',
+			'TAPPER': '',
+			'TODD': '',
+			'TRUMP': 'CANDIDATE',
+			'TUMULTY': '',
+			'UNIDENTIFIABLE MALE': 'AUDIENCE',
+			'UNIDENTIFIED FEMALE': 'AUDIENCE',
+			'UNIDENTIFIED MALE': 'AUDIENCE',
+			'WALKER': '',
+			'WALLACE': '',
+			'WEBB': '',
+			'WILKINS': '',
+			'WOODRUFF': ''
+		}
+		try:
+			if replacement_dict[name] and replacement_dict[name] != '':
+				return replacement_dict[name]
+			else:
+				return 'OTHER'
+		except Exception as e:
+			return e
+
+
+class SpeakerDebate(Model):
+	name = CharField(null=False)
+	debate = ForeignKeyField(Debate, related_name='speaker_debate_debate_fk')
+	mapped_name = CharField(null=True)
+	speaker = ForeignKeyField(Speaker, related_name='speaker_debate_speaker_fk')
+
+	class Meta:
+		database = DATABASE
+		order_by = ('debate','name',)
+
+
+	@classmethod
+	def create_speaker(cls, name, file_name):
+		try:
+			mapped_name = Speaker.get_mapped_name(name)
+			debate_id = Debate.get(Debate.file_name == file_name).id
+			speaker_id = Speaker.get(Speaker.name == mapped_name).id
+			with DATABASE.transaction():
+				cls.create(
+							name=name,
+							debate=debate_id,
+							mapped_name=mapped_name,
+							speaker=speaker_id
+							)
+		except IntegrityError:
+			raise ValueError("Speaker exists")
+
+
+	@classmethod
+	def get_all_speakers(cls):
+		"""
+		Get a list of all the speakers
+
+		:ret : speaker_list list of speaker names
+		"""
+		speaker_list = [speaker.mapped_name for speaker in cls.select()]
+		speaker_list = list(set(speaker_list))
+		return speaker_list
+
+
+	@classmethod
+	def get_speakers(cls, file_name, use_mapped_name=True):
+		"""
+		Get a list of all the speakers in a specific debate text file
+
+		:params : file_name name of file to limit speakers by
+		:ret : speaker_list list of speaker names
+		"""
+		try:
+			if use_mapped_name:
+				speaker_list = [speaker.mapped_name for speaker in cls.select() if speaker.debate.file_name == file_name]
+				speaker_list = list(set(speaker_list))
+				return speaker_list
+			else:
+				speaker_list = [speaker.name for speaker in cls.select() if speaker.debate.file_name == file_name]
+				speaker_list = list(set(speaker_list))
+				return speaker_list
+		except Exception as e:
+			return e
+
+
+	@classmethod
+	def get_speakers_debates(cls, speaker_name, use_mapped_name=True):
+		"""
+		Get all the debates a speaker was present in
+
+		:params : speaker_name name of speaker to get debates for
+		:params : use_mapped_name bool of whether to query with mapped_name or speaker_name
+		:ret : speaker_list list of speaker names
+		"""
+		try:
+			if use_mapped_name:
+				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.mapped_name == speaker_name)]
+			else:
+				debate_list = [speaker.debate.debate_name for speaker in cls.select().where(cls.name == speaker_name)]
+			return debate_list
+		except Exception as e:
+			return e
 
 
 class SpeakerText(Model):
@@ -441,7 +479,7 @@ class SpeakerText(Model):
 		try:
 			with DATABASE.transaction():
 				debate_id = Debate.get(Debate.file_name == file_name).id
-				speaker_id = Speaker.get(Speaker.name == speaker_name, Speaker.debate == debate_id).id
+				speaker_id = SpeakerDebate.get(SpeakerDebate.name == speaker_name, SpeakerDebate.debate == debate_id).speaker_id
 				cls.create(speaker_text=speaker_text, order=order, speaker=speaker_id, debate=debate_id)
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
@@ -555,5 +593,5 @@ class Interjection(Model):
 
 def initialize():
 	DATABASE.connect()
-	DATABASE.create_tables([Debate, Speaker, SpeakerText, Interjection], safe=True)
+	DATABASE.create_tables([Debate, Speaker, SpeakerDebate, SpeakerText, Interjection], safe=True)
 	DATABASE.close()

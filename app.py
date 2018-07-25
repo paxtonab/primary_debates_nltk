@@ -22,7 +22,8 @@ def initialize_speakers():
 
         # loop through all speakers and populate table
         for speaker in speaker_list:
-            models.Speaker.create_speaker(speaker, file_name)
+            models.Speaker.create_speaker(speaker)
+            models.SpeakerDebate.create_speaker(speaker, file_name)
 
         # loop through all interjections and populate table
         for interjection in interjection_list:
@@ -39,7 +40,7 @@ def initialize_speakers_text():
         file_text = debate_parser.open_file(file_name)
 
         # get the speakers for specific file
-        speaker_list = models.Speaker.get_speakers(file_name, False)
+        speaker_list = models.SpeakerDebate.get_speakers(file_name, False)
 
         # get the parsed text with new speakers
         parsed_text = debate_parser.split_on_speaker(speaker_list, file_text)
