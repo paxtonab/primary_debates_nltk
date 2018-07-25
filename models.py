@@ -466,12 +466,11 @@ class SpeakerDebate(Model):
 class SpeakerText(Model):
 	speaker_text = CharField(null=False)
 	order = IntegerField(null=False)
-	speaker = ForeignKeyField(Speaker, related_name='speaker_speaker_text')
-	debate = ForeignKeyField(Debate, related_name='debate_speaker_text')
+	speaker_debate = ForeignKeyField(SpeakerDebate, related_name='speaker_debate_speaker_text')
 
 	class Meta:
 		database = DATABASE
-		order_by = ('debate','speaker','order',)
+		order_by = ('speaker_debate','order',)
 
 
 	@classmethod
@@ -479,22 +478,22 @@ class SpeakerText(Model):
 		try:
 			with DATABASE.transaction():
 				debate_id = Debate.get(Debate.file_name == file_name).id
-				speaker_id = SpeakerDebate.get(SpeakerDebate.name == speaker_name, SpeakerDebate.debate == debate_id).speaker_id
-				cls.create(speaker_text=speaker_text, order=order, speaker=speaker_id, debate=debate_id)
+				speaker_debate_id = SpeakerDebate.get(SpeakerDebate.name == speaker_name, SpeakerDebate.debate == debate_id).id
+				cls.create(
+							speaker_text=speaker_text,
+							order=order,
+							speaker_debate_id=speaker_debate_id
+							) # speaker=speaker_id, debate=debate_id)
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
 
 
 	@classmethod
-	def get_speaker_text(cls, speaker_name, use_mapped_name=True):
+	def get_speaker_text(cls, speaker_name):
 		speaker_name = speaker_name.strip().upper()
 		try:
-			if use_mapped_name:
-				speaker_text = [{'order': st.order, 'text': st.speaker_text, 'speaker': st.speaker.mapped_name, 'debate': st.debate.friendly_name} for st in cls.select() if st.speaker.mapped_name == speaker_name]
-				return speaker_text
-			else:
-				speaker_text = [{'order': st.order, 'text': st.speaker_text, 'speaker': st.speaker.mapped_name, 'debate': st.debate.friendly_name} for st in cls.select() if st.speaker.speaker_name == speaker_name]
-				return speaker_text
+			speaker_text = [{'order': st.order, 'text': st.speaker_text, 'speaker': st.speaker_debate.speaker.name, 'debate': st.speaker_debate.debate.friendly_name} for st in cls.select() if st.speaker_debate.speaker.name == speaker_name]
+			return speaker_text
 		except Exception as e:
 			return e
 
