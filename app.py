@@ -1,5 +1,6 @@
 import debate_parser
 import models
+import interjection_utils
 
 
 def initialize_debates():
@@ -26,6 +27,7 @@ def initialize_speakers():
             models.SpeakerDebate.create_speaker(speaker, file_name)
 
         # loop through all interjections and populate table
+        interjection_list = interjection_utils.get_cleaned_interjection_list(interjection_list)
         for interjection in interjection_list:
             models.Interjection.create_interjection(interjection)
 

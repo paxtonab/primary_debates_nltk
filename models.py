@@ -62,6 +62,8 @@ class Debate(Model):
 class Speaker(Model):
 	name = CharField(unique=True)
 	role = CharField(null=True)
+	# full_name = CharField(null=True)
+	# party = CharField(null=True)
 
 	class Meta:
 		database = DATABASE
@@ -564,7 +566,7 @@ class SpeakerText(Model):
 
 
 class Interjection(Model):
-	interjection = CharField(null=False)
+	interjection = CharField(unique=True)
 
 	class Meta:
 		database = DATABASE
@@ -579,7 +581,7 @@ class Interjection(Model):
 							interjection=interjection
 							)
 		except IntegrityError:
-			raise ValueError("Interjection exists")
+			pass
 
 	@classmethod
 	def get_interjections(cls):
