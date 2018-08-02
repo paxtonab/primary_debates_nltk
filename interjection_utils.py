@@ -1,11 +1,11 @@
 def clean_interjections(interjection):
-    interjection = interjection.strip()
-    if interjection [0] != "(":
-        return None
-    else:
-        interjection = interjection.replace(")(", ") (")
-        interjection = interjection.replace(".", "")
-        return interjection
+  interjection = interjection.strip()
+  if interjection[0] != "(":
+    return None
+  else:
+    interjection = interjection.replace(")(", ") (")
+    interjection = interjection.replace(".", "")
+    return interjection
 
 
 def get_interjection_type(interjection):
@@ -43,9 +43,9 @@ def clean_double_interjection(interjection):
 
 
 def get_cleaned_interjection_list(interjection_list):
-    interjection_list = [clean_interjections(interjection) for interjection in interjection_list if clean_interjections(interjection)]
-    interjection_dict = [{'text': interjection, 'type': get_interjection_type(interjection)} for interjection in interjection_list]
-    interjection_list = [interjection['text'] for interjection in interjection_dict if interjection['type'] == 'normal']
-    [interjection_list.append(clean_normal_plus_interjection(interjection)) for interjection in interjection_dict if interjection['type'] == 'normal_plus']
-    [[interjection_list.append(j) for j in clean_double_interjection(interjection)] for interjection in interjection_dict if interjection['type'] == 'double']
-    return interjection_list
+  interjection_list = [clean_interjections(interjection) for interjection in interjection_list if clean_interjections(interjection) is not None]
+  interjection_dict = [{'text': interjection, 'type': get_interjection_type(interjection)} for interjection in interjection_list]
+  interjection_list = [interjection['text'] for interjection in interjection_dict if interjection['type'] == 'normal']
+  [interjection_list.append(clean_normal_plus_interjection(interjection)) for interjection in interjection_dict if interjection['type'] == 'normal_plus']
+  [[interjection_list.append(j) for j in clean_double_interjection(interjection)] for interjection in interjection_dict if interjection['type'] == 'double']
+  return interjection_list

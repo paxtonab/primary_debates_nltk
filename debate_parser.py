@@ -59,10 +59,18 @@ def get_speakers(text):
     for i in temp_list:
         if i[0].isupper() and i[0] not in speaker_list:
             speaker_list.append(i[0])
+        if len(i) > 1:
+            if i[1].find(")") > -1:
+                temp_interjection_list = re.findall("\([\w\s]+\)", i[1])
+                [interjection_list.append(t) for t in temp_interjection_list]
+        else:
+            if i[0].find(")") > -1:
+                temp_interjection_list = re.findall("\([\w\s]+\)", i[0])
+                [interjection_list.append(t) for t in temp_interjection_list]
 
     # create interjection_list for (APPLAUSE), etc. based on '('
     for i in speaker_list:
-        if i.find('(') != -1 or i.find(')') != -1: # or i.find(' ') != -1:
+        if i.find('(') > -1 or i.find(')') > -1: # or i.find(' ') != -1:
             interjection_list.append(i)
 
     # remove any interjections from speaker_list

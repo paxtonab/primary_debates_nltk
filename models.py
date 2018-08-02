@@ -1,6 +1,7 @@
 import csv
 import datetime
 import json
+import re
 
 from peewee import *
 
@@ -590,6 +591,89 @@ class Interjection(Model):
 			return interjections
 		except Exception as e:
 			return e
+
+	@classmethod
+	def get_interjection_pattern(cls):
+		"""
+		Get a list of interjections to use as delimiters for analyzing text
+		"""
+		delimiters = cls.get_interjections()
+		pattern = '|'.join(map(re.escape, delimiters))
+		pattern = '('+pattern+')'
+		return pattern
+
+
+	@classmethod
+	def get_mapped_interjection(cls, interjection):
+		"""
+		Get mapped interjections
+		"""
+		interjection_dict = {
+			'(4)': 'OTHER',
+			'(APPLAUSE CHEERING)': 'AUDIENCE_APPLAUSE',
+			'(APPLAUSE)': 'AUDIENCE_APPLAUSE',
+			'(AUDIENCE BOOING)': 'AUDIENCE_BOOING',
+			'(AUDIENCE BOOS)': 'AUDIENCE_BOOING',
+			'(AUDIENCE REACTION)': 'AUDIENCE_MIXED',
+			'(AUDIENCE)': 'AUDIENCE_MIXED',
+			'(AUDIO GAP)': 'UNKNOWN',
+			'(BEGIN VIDEO CLIP)': 'DEBATE_VIDEO_START',
+			'(BEGIN VIDEOTAPE)': 'DEBATE_VIDEO_START',
+			'(BELL BRINGING)': 'DEBATE_BELL',
+			'(BELL RING)': 'DEBATE_BELL',
+			'(BELL RINGING)': 'DEBATE_BELL',
+			'(BELL RINGS)': 'DEBATE_BELL',
+			'(BELL SOUND)': 'DEBATE_BELL',
+			'(BOOING)': 'AUDIENCE_BOOING',
+			'(BOOS)': 'AUDIENCE_BOOING',
+			'(BREAK)': 'MEDIA_BREAK',
+			'(BUZZER NOISE)': 'DEBATE_BELL',
+			'(CHEERING AND APPLAUSE)': 'AUDIENCE_APPLAUSE',
+			'(CHEERING)': 'AUDIENCE_APPLAUSE',
+			'(CLOSE VIDEO CLIP)': 'DEBATE_VIDEO_END',
+			'(COMMERCIAL BREAK)': 'MEDIA_BREAK',
+			'(COMMERCIAL NOT TRANSCRIBED)': 'MEDIA_BREAK',
+			'(COMMERCIAL)': 'MEDIA_BREAK',
+			'(CROSS TALK)': 'CANDIDATE_CROSSTALK',
+			'(CROSSTALK)': 'CANDIDATE_CROSSTALK',
+			'(DOUBLE BELL RINGS)': 'DEBATE_BELL',
+			'(END VIDEO CLIP)': 'DEBATE_VIDEO_END',
+			'(END VIDEOTAPE)': 'DEBATE_VIDEO_END',
+			'(INAUDIBLE)': 'UNKNOWN',
+			'(Inaudible)': 'UNKNOWN',
+			'(LAUGH)': 'AUDIENCE_LAUGHTER',
+			'(LAUGHING)': 'AUDIENCE_LAUGHTER',
+			'(LAUGHTER AND APPLAUSE)': 'AUDIENCE_LAUGHTER',
+			'(LAUGHTER)': 'AUDIENCE_LAUGHTER',
+			'(LAUGHTER, BOOING)': 'AUDIENCE_LAUGHTER',
+			'(LONG PAUSE)': 'CANDIDATE_STALLING',
+			'(MIX OF APPLAUSE AND BOOING)': 'AUDIENCE_MIXED',
+			'(MOMENT OF SILENCE)': 'DEBATE_SILENCE',
+			'(MUSIC PLAYING, "AMERICA" BY SIMON & GARFUNKEL)': 'MEDIA_MUSIC',
+			'(MUSIC)': 'MEDIA_MUSIC',
+			'(OFF MIKE)': 'CANDIDATE_STALLING',
+			'(OVERTALK)': 'CANDIDATE_CROSSTALK',
+			'(SINGING)': 'MEDIA_MUSIC',
+			'(SPEAKING IN SPANISH)': 'CANDIDATE_SPANISH',
+			'(SPEAKING SPANISH)': 'CANDIDATE_SPANISH',
+			'(STAR SPANGLED BANNER)': 'MEDIA_MUSIC',
+			'(THEME MUSIC)': 'MEDIA_MUSIC',
+			'(THROAT CLEAR)': 'CANDIDATE_STALLING',
+			'(UNINTEL)': 'UNKNOWN',
+			'(UNKNOWN)': 'UNKNOWN',
+			'(Video Intro)': 'DEBATE_VIDEO_START',
+			'(Video ends)': 'DEBATE_VIDEO_END',
+			'(c)': 'OTHER',
+			'(in Spanish)': 'CANDIDATE_SPANISH',
+			'(inaudible)': 'UNKNOWN',
+			'(k)': 'OTHER',
+			'(oh)': 'OTHER',
+			'(ph)': 'OTHER',
+			'(sic)': 'UNKNOWN',
+			'(thousand)': 'OTHER',
+			'(through translator)': 'OTHER',
+			'(unintel)': 'UNKNOWN',
+		}
 
 
 def initialize():
