@@ -3,6 +3,7 @@ import datetime
 import json
 import re
 
+from collections import Counter
 from peewee import *
 
 DATABASE = SqliteDatabase('debates.db')
@@ -485,8 +486,8 @@ class SpeakerText(Model):
 				cls.create(
 							speaker_text=speaker_text,
 							order=order,
-							speaker_debate_id=speaker_debate_id
-							) # speaker=speaker_id, debate=debate_id)
+							speaker_debate=speaker_debate_id
+							)
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
 
@@ -579,8 +580,8 @@ class Interjection(Model):
 		try:
 			with DATABASE.transaction():
 				cls.create(
-							interjection=interjection
-							)
+						   interjection=interjection
+						   )
 		except IntegrityError:
 			pass
 
@@ -616,9 +617,9 @@ class Interjection(Model):
 			'(AUDIENCE BOOS)': 'AUDIENCE_BOOING',
 			'(AUDIENCE REACTION)': 'AUDIENCE_MIXED',
 			'(AUDIENCE)': 'AUDIENCE_MIXED',
-			'(AUDIO GAP)': 'UNKNOWN',
-			'(BEGIN VIDEO CLIP)': 'DEBATE_VIDEO_START',
-			'(BEGIN VIDEOTAPE)': 'DEBATE_VIDEO_START',
+			'(AUDIO GAP)': 'UNINTELLIGIBLE',
+			'(BEGIN VIDEO CLIP)': 'MEDIA',
+			'(BEGIN VIDEOTAPE)': 'MEDIA',
 			'(BELL BRINGING)': 'DEBATE_BELL',
 			'(BELL RING)': 'DEBATE_BELL',
 			'(BELL RINGING)': 'DEBATE_BELL',
@@ -626,21 +627,21 @@ class Interjection(Model):
 			'(BELL SOUND)': 'DEBATE_BELL',
 			'(BOOING)': 'AUDIENCE_BOOING',
 			'(BOOS)': 'AUDIENCE_BOOING',
-			'(BREAK)': 'MEDIA_BREAK',
+			'(BREAK)': 'MEDIA',
 			'(BUZZER NOISE)': 'DEBATE_BELL',
 			'(CHEERING AND APPLAUSE)': 'AUDIENCE_APPLAUSE',
 			'(CHEERING)': 'AUDIENCE_APPLAUSE',
-			'(CLOSE VIDEO CLIP)': 'DEBATE_VIDEO_END',
-			'(COMMERCIAL BREAK)': 'MEDIA_BREAK',
-			'(COMMERCIAL NOT TRANSCRIBED)': 'MEDIA_BREAK',
-			'(COMMERCIAL)': 'MEDIA_BREAK',
+			'(CLOSE VIDEO CLIP)': 'MEDIA',
+			'(COMMERCIAL BREAK)': 'MEDIA',
+			'(COMMERCIAL NOT TRANSCRIBED)': 'MEDIA',
+			'(COMMERCIAL)': 'MEDIA',
 			'(CROSS TALK)': 'CANDIDATE_CROSSTALK',
 			'(CROSSTALK)': 'CANDIDATE_CROSSTALK',
 			'(DOUBLE BELL RINGS)': 'DEBATE_BELL',
-			'(END VIDEO CLIP)': 'DEBATE_VIDEO_END',
-			'(END VIDEOTAPE)': 'DEBATE_VIDEO_END',
-			'(INAUDIBLE)': 'UNKNOWN',
-			'(Inaudible)': 'UNKNOWN',
+			'(END VIDEO CLIP)': 'MEDIA',
+			'(END VIDEOTAPE)': 'MEDIA',
+			'(INAUDIBLE)': 'UNINTELLIGIBLE',
+			'(Inaudible)': 'UNINTELLIGIBLE',
 			'(LAUGH)': 'AUDIENCE_LAUGHTER',
 			'(LAUGHING)': 'AUDIENCE_LAUGHTER',
 			'(LAUGHTER AND APPLAUSE)': 'AUDIENCE_LAUGHTER',
@@ -648,35 +649,98 @@ class Interjection(Model):
 			'(LAUGHTER, BOOING)': 'AUDIENCE_LAUGHTER',
 			'(LONG PAUSE)': 'CANDIDATE_STALLING',
 			'(MIX OF APPLAUSE AND BOOING)': 'AUDIENCE_MIXED',
-			'(MOMENT OF SILENCE)': 'DEBATE_SILENCE',
-			'(MUSIC PLAYING, "AMERICA" BY SIMON & GARFUNKEL)': 'MEDIA_MUSIC',
-			'(MUSIC)': 'MEDIA_MUSIC',
-			'(OFF MIKE)': 'CANDIDATE_STALLING',
+			'(MOMENT OF SILENCE)': 'MEDIA',
+			'(MUSIC PLAYING, "AMERICA" BY SIMON & GARFUNKEL)': 'MEDIA',
+			'(MUSIC)': 'MEDIA',
+			'(OFF MIKE)': 'CANDIDATE_CROSSTALK',
 			'(OVERTALK)': 'CANDIDATE_CROSSTALK',
-			'(SINGING)': 'MEDIA_MUSIC',
+			'(SINGING)': 'MEDIA',
 			'(SPEAKING IN SPANISH)': 'CANDIDATE_SPANISH',
 			'(SPEAKING SPANISH)': 'CANDIDATE_SPANISH',
-			'(STAR SPANGLED BANNER)': 'MEDIA_MUSIC',
-			'(THEME MUSIC)': 'MEDIA_MUSIC',
+			'(STAR SPANGLED BANNER)': 'MEDIA',
+			'(THEME MUSIC)': 'MEDIA',
 			'(THROAT CLEAR)': 'CANDIDATE_STALLING',
-			'(UNINTEL)': 'UNKNOWN',
-			'(UNKNOWN)': 'UNKNOWN',
-			'(Video Intro)': 'DEBATE_VIDEO_START',
-			'(Video ends)': 'DEBATE_VIDEO_END',
+			'(UNINTEL)': 'UNINTELLIGIBLE',
+			'(UNKNOWN)': 'UNINTELLIGIBLE',
+			'(Video Intro)': 'MEDIA',
+			'(Video ends)': 'MEDIA',
 			'(c)': 'OTHER',
 			'(in Spanish)': 'CANDIDATE_SPANISH',
-			'(inaudible)': 'UNKNOWN',
+			'(inaudible)': 'UNINTELLIGIBLE',
 			'(k)': 'OTHER',
 			'(oh)': 'OTHER',
 			'(ph)': 'OTHER',
-			'(sic)': 'UNKNOWN',
+			'(sic)': 'UNINTELLIGIBLE',
 			'(thousand)': 'OTHER',
 			'(through translator)': 'OTHER',
-			'(unintel)': 'UNKNOWN',
+			'(unintel)': 'UNINTELLIGIBLE'
 		}
+
+		try:
+			return interjection_dict[interjection]
+		except KeyError:
+			return 'OTHER'
+
+
+class TextInterjection(Model):
+	speaker_text = ForeignKeyField(SpeakerText, related_name='speaker_text_interjection_text_fk')
+	audience_applause = IntegerField(null=False, default=0)
+	audience_booing = IntegerField(null=False, default=0)
+	audience_laughter = IntegerField(null=False, default=0)
+	audience_mixed = IntegerField(null=False, default=0)
+	candidate_crosstalk = IntegerField(null=False, default=0)
+	candidate_spanish = IntegerField(null=False, default=0)
+	candidate_stalling = IntegerField(null=False, default=0)
+	debate_bell = IntegerField(null=False, default=0)
+	media = IntegerField(null=False, default=0)
+	unintelligible = IntegerField(null=False, default=0)
+	other = IntegerField(null=False, default=0)
+
+	class Meta:
+		database = DATABASE
+		order_by = ('speaker_text',)
+
+
+	@classmethod
+	def create_text_interjection(cls, speaker_text, interjection_pattern):
+		try:
+			# todo: move default dict creation outside of class creation, and pass in as variable
+			# default = {'OTHER': 0, 'AUDIENCE_LAUGHTER': 0, 'AUDIENCE_APPLAUSE': 0, 'CANDIDATE_CROSSTALK': 0, 'AUDIENCE_MIXED': 0, 'AUDIENCE_BOOING': 0, 'CANDIDATE_SPANISH': 0, 'DEBATE_BELL': 0, 'MEDIA': 0, 'UNKNOWN': 0, 'CANDIDATE_STALLING': 0}
+			mapped_interjections = [Interjection.get_mapped_interjection(i) for i in Interjection.get_interjections()]
+			default = {k:0 for k in mapped_interjections}
+			text_interjections = cls.get_text_interjections(speaker_text.speaker_text, interjection_pattern)
+			context = {**default, **text_interjections}
+
+			with DATABASE.transaction():
+				cls.create(
+							speaker_text=speaker_text.id,
+							audience_applause=context['AUDIENCE_APPLAUSE'],
+							audience_booing=context['AUDIENCE_BOOING'],
+							audience_laughter=context['AUDIENCE_LAUGHTER'],
+							audience_mixed=context['AUDIENCE_MIXED'],
+							candidate_crosstalk=context['CANDIDATE_CROSSTALK'],
+							candidate_spanish=context['CANDIDATE_SPANISH'],
+							candidate_stalling=context['CANDIDATE_STALLING'],
+							debate_bell=context['DEBATE_BELL'],
+							media=context['MEDIA'],
+							unintelligible=context['UNINTELLIGIBLE'],
+							other=context['OTHER']
+							) # speaker=speaker_id, debate=debate_id)
+		except IntegrityError:
+			raise ValueError("speaker text already exists")
+
+	@classmethod
+	def get_text_interjections(cls, text, interjection_pattern):
+		interjection_list = re.findall(interjection_pattern, text)
+		if len(interjection_list) > 0:
+			interjection_list = [Interjection.get_mapped_interjection(interjection) for interjection in interjection_list]
+			interjection_count = Counter(interjection_list)
+			return interjection_count
+		else:
+			return None
 
 
 def initialize():
 	DATABASE.connect()
-	DATABASE.create_tables([Debate, Speaker, SpeakerDebate, SpeakerText, Interjection], safe=True)
+	DATABASE.create_tables([Debate, Speaker, SpeakerDebate, SpeakerText, Interjection, TextInterjection], safe=True)
 	DATABASE.close()

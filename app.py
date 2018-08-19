@@ -51,6 +51,19 @@ def initialize_speakers_text():
             models.SpeakerText.create_speaker_text(pt['text'], pt['order'], pt['speaker'], file_name)
 
 
+def initialize_text_interjections():
+    # get speaker_text
+    speaker_text = models.SpeakerText.select()
+
+    # get interjection pattern
+    interjection_pattern = models.Interjection.get_interjection_pattern()
+
+    # loop through speaker_text and create interjection_text
+    for st in speaker_text:
+        # read the file
+        models.TextInterjection.create_text_interjection(speaker_text=st, interjection_pattern=interjection_pattern)
+
+
 def main():
     initialize_debates()
     initialize_speakers()
