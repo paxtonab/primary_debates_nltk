@@ -57,11 +57,12 @@ def initialize_text_interjections():
 
     # get interjection pattern
     interjection_pattern = models.Interjection.get_interjection_pattern()
+    mapped_interjections = models.Interjection.get_unique_mapped_interjections()
 
     # loop through speaker_text and create interjection_text
     for st in speaker_text:
         # read the file
-        models.TextInterjection.create_text_interjection(speaker_text=st, interjection_pattern=interjection_pattern)
+        models.TextInterjection.create_text_interjection(st.speaker_text, st.id, interjection_pattern, mapped_interjections)
 
 
 def main():

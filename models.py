@@ -681,9 +681,15 @@ class Interjection(Model):
 		except KeyError:
 			return 'OTHER'
 
+	@classmethod
+	def get_unique_mapped_interjections(cls):
+		mapped_interjections = [Interjection.get_mapped_interjection(i) for i in Interjection.get_interjections()]
+		return mapped_interjections
+
+
 
 class TextInterjection(Model):
-	speaker_text = ForeignKeyField(SpeakerText, related_name='speaker_text_interjection_text_fk')
+	speaker_text_id = ForeignKeyField(SpeakerText, related_name='speaker_text_interjection_text_fk')
 	audience_applause = IntegerField(null=False, default=0)
 	audience_booing = IntegerField(null=False, default=0)
 	audience_laughter = IntegerField(null=False, default=0)
@@ -702,18 +708,18 @@ class TextInterjection(Model):
 
 
 	@classmethod
-	def create_text_interjection(cls, speaker_text, interjection_pattern):
-		try:
-			# todo: move default dict creation outside of class creation, and pass in as variable
-			# default = {'OTHER': 0, 'AUDIENCE_LAUGHTER': 0, 'AUDIENCE_APPLAUSE': 0, 'CANDIDATE_CROSSTALK': 0, 'AUDIENCE_MIXED': 0, 'AUDIENCE_BOOING': 0, 'CANDIDATE_SPANISH': 0, 'DEBATE_BELL': 0, 'MEDIA': 0, 'UNKNOWN': 0, 'CANDIDATE_STALLING': 0}
-			mapped_interjections = [Interjection.get_mapped_interjection(i) for i in Interjection.get_interjections()]
+	def create_text_interjection(cls, speaker_text, speaker_text_id, interjection_pattern, mapped_interjections):
+		# expected default is below dict of unique values from interjections
+		# {'OTHER': 0, 'AUDIENCE_LAUGHTER': 0, 'AUDIENCE_APPLAUSE': 0, 'CANDIDATE_CROSSTALK': 0, 'AUDIENCE_MIXED': 0, 'AUDIENCE_BOOING': 0, 'CANDIDATE_SPANISH': 0, 'DEBATE_BELL': 0, 'MEDIA': 0, 'UNKNOWN': 0, 'CANDIDATE_STALLING': 0}
+		# create a default dict and map text_interjections values to it
+		text_interjections = cls.get_text_interjections(interjection_pattern, text=speaker_text)
+		if text_interjections:
 			default = {k:0 for k in mapped_interjections}
-			text_interjections = cls.get_text_interjections(speaker_text.speaker_text, interjection_pattern)
 			context = {**default, **text_interjections}
 
 			with DATABASE.transaction():
 				cls.create(
-							speaker_text=speaker_text.id,
+							speaker_text_id=speaker_text_id,
 							audience_applause=context['AUDIENCE_APPLAUSE'],
 							audience_booing=context['AUDIENCE_BOOING'],
 							audience_laughter=context['AUDIENCE_LAUGHTER'],
@@ -725,12 +731,10 @@ class TextInterjection(Model):
 							media=context['MEDIA'],
 							unintelligible=context['UNINTELLIGIBLE'],
 							other=context['OTHER']
-							) # speaker=speaker_id, debate=debate_id)
-		except IntegrityError:
-			raise ValueError("speaker text already exists")
+							)
 
 	@classmethod
-	def get_text_interjections(cls, text, interjection_pattern):
+	def get_text_interjections(cls, interjection_pattern, text):
 		interjection_list = re.findall(interjection_pattern, text)
 		if len(interjection_list) > 0:
 			interjection_list = [Interjection.get_mapped_interjection(interjection) for interjection in interjection_list]
