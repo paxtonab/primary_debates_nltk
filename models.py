@@ -469,6 +469,7 @@ class SpeakerDebate(Model):
 
 class SpeakerText(Model):
 	speaker_text = CharField(null=False)
+	clean_text = CharField(null=True)
 	order = IntegerField(null=False)
 	speaker_debate = ForeignKeyField(SpeakerDebate, related_name='speaker_debate_speaker_text')
 
@@ -485,12 +486,30 @@ class SpeakerText(Model):
 				speaker_debate_id = SpeakerDebate.get(SpeakerDebate.name == speaker_name, SpeakerDebate.debate == debate_id).id
 				cls.create(
 							speaker_text=speaker_text,
+							clean_text=None,
 							order=order,
 							speaker_debate=speaker_debate_id
 							)
 		except IntegrityError:
 			raise ValueError("speaker text already exists")
 
+	@classmethod
+	def update_clean_text(text, interjection_pattern):
+		"""Method to update speaker_text to clean_text"""
+		# interjection_pattern = Interjection.get_interjection_pattern()
+		# [clean_text(s, interjection_pattern) for s in speaker_text]
+		pass
+
+	@classmethod
+	def get_clean_text(text, interjection_pattern):
+	   text = text.replace('.\n','. ')
+	   text = text.replace('?\n','. ')
+	   text = text.replace('\n','')
+	   text = text.replace(': ','')
+	   text = text.replace('\\','')
+	   text = re.sub(interjection_pattern, '', text)
+	   text = text.strip()
+	   return text
 
 	@classmethod
 	def get_speaker_text(cls, speaker_name):

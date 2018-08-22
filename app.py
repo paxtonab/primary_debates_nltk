@@ -69,3 +69,4 @@ def main():
     initialize_debates()
     initialize_speakers()
     initialize_speakers_text()
+    initialize_text_interjections()
