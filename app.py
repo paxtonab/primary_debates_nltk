@@ -36,6 +36,8 @@ def initialize_speakers_text():
     # get file names
     file_list = models.Debate.get_debates()
 
+    interjection_pattern = models.Interjection.get_interjection_pattern()
+
     # loop through files and get speakers and text
     for file_name in file_list:
         # read the file
@@ -48,7 +50,7 @@ def initialize_speakers_text():
         parsed_text = debate_parser.split_on_speaker(speaker_list, file_text)
 
         for pt in parsed_text:
-            models.SpeakerText.create_speaker_text(pt['text'], pt['order'], pt['speaker'], file_name)
+            models.SpeakerText.create_speaker_text(pt['text'], pt['order'], pt['speaker'], file_name, interjection_pattern)
 
 
 def initialize_text_interjections():
