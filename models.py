@@ -619,7 +619,20 @@ class Interjection(Model):
 	@classmethod
 	def get_mapped_interjection(cls, interjection):
 		"""
-		Get mapped interjections
+		Map all interjections to a condensed list:
+		{
+			'OTHER': 0,
+			'AUDIENCE_LAUGHTER': 0,
+			'AUDIENCE_APPLAUSE': 0,
+			'CANDIDATE_CROSSTALK': 0,
+			'AUDIENCE_MIXED': 0,
+			'AUDIENCE_BOOING': 0,
+			'CANDIDATE_SPANISH': 0,
+			'DEBATE_BELL': 0,
+			'MEDIA': 0,
+			'UNKNOWN': 0,
+			'CANDIDATE_STALLING': 0
+		}
 		"""
 		interjection_dict = {
 			'(4)': 'OTHER',
